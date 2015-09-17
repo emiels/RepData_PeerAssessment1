@@ -20,25 +20,27 @@ opts_chunk$set(fig.path = "./figures/") # set figures directory
 The histogram shows the distribution of activity over days 
 (every day about the same activity or some days far more than others)
 ```{r "Histogram"}
-histact <- aggregate(steps ~ date, data = completeact, sum) #summarize steps per day
+histact <- aggregate(steps ~ date, 
+                     data = completeact, sum) #summarize steps per day
+actmedian <- format(median(histact$steps), nsmall = 1) # calc median
+actmean <- format(mean(histact$steps), nsmall = 1) # and mean
 histplot <- hist(histact$steps, breaks = 11, freq = TRUE, 
                  main = "Histogram of Steps", 
                  xlab = "Total Steps per Day", 
                  ylab = "Number of Days")
 ``` 
 
-Roughly a Bell-shape distribution with 2 days with 20k+ steps
+This is roughly a Bell-shape distribution with 2 days with 20k+ steps.
 
-The **median** and **mean** of the total number of steps per day are
-```{r "MeanAndMedian"}
-median(histact$steps)
-mean(histact$steps)
-```
+The **median** of the total number of steps per day is: `r actmedian`
+and the **mean** is: `r actmean`
+
 
 ## What is the average daily activity pattern?
 ```{r "average daily"}
 # calculate average steps per interval over all days
 avgact <- aggregate(steps~interval, data = completeact, mean) 
+maxavgact <- avgact[which.max(avgact$steps),1]
 plot(avgact$interval, avgact$steps, type = "l",
      xlab = "Time in 5 min interval",
      ylab = "average number of steps",
@@ -46,35 +48,34 @@ plot(avgact$interval, avgact$steps, type = "l",
      (in 5 min increments)") # plot time series
 ```
 
-On average the maximum number of steps are made in **interval**
-```{r "average max interval"}
-avgact[which.max(avgact$steps),1]
-```
+On average the maximum number of steps are made in **interval**: `r maxavgact`
+
 This corresponds with interval: 8.35 - 8.39 AM
 
 ## Imputing missing values
-The total number of missing values is
 ```{r "number of missing values"}
-sum(!complete.cases(naact))
+nrmissing <- sum(!complete.cases(naact))
 ```
+The total number of missing values is: `r nrmissing`
+
 Missing values are imputed using the average number of steps in that interval over all days with valid data 
 (fortunately this was already calculated in the average daily pattern). 
-The histogram based on this imputed dataset shows a higher number of 'average'days, caused by the imputing mechanism.
+The histogram based on this imputed dataset shows a higher number of 'average' days, caused by the imputing mechanism.
 ```{r "impute missing data"}
 naact$steps <- avgact$steps # replace NA with average number of steps
-imputedact <- rbind(completeact, naact)
-histimputedact <- aggregate(steps ~ date, data = imputedact, sum) #summarize steps per day
+imputedact <- rbind(completeact, naact) #combine complete and imputed NA
+histimputedact <- aggregate(steps ~ date, 
+                            data = imputedact, sum) #summarize steps per day
+impmedian <- format(median(histimputedact$steps), nsmall = 1) # calc median
+impmean <- format(mean(histimputedact$steps),nsmall = 1)  # and mean for imputed data
 histplot2 <- hist(histimputedact$steps, breaks = 11, freq = TRUE, 
                   main = "Histogram of Steps - Imputed Data", 
                   xlab = "Total Steps per Day", 
                   ylab = "Number of Days")
 ```
 
-The **median** and **mean** of the total number of steps per day (imputed data) are
-```{r "MeanAndMedianImputed"}
-median(histimputedact$steps)
-mean(histimputedact$steps)
-```
+The **median** of the total number of steps per day (imputed data) is:`r impmedian` and the **mean** is: `r impmean`
+
 Impact from imputing:
 
 **Mean**: For the imputed data the mean is the same for imputed en non-imputed data: this is caused by the impute strategy: using the average number of steps per day (= mean) for the previous NA-data, imputing causes no different data (only mean, no outliers)
@@ -101,4 +102,4 @@ xyplot(steps~interval|whatday, # plot steps versus interval, group by weekend
        main = "Activity pattern over the day - weekend vs weekday")
 ```
 
-Based on the plot the peak in weekdays is higher (230 vs 166), but the weekends have a higher activity pattern on average (42 vs 36). Also note that activity in weekends starts later than during weekday: he/she likes to sleep longer in the weekend.
+Yes: there are some differences. Based on the plot the peak in weekdays is higher (230 vs 166), but the weekends have a higher activity pattern on average (42 vs 36). Also note that activity in weekends starts later than during weekday: he/she likes to sleep longer in the weekend.
